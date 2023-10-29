@@ -4,7 +4,10 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - docker build -t web .
+      - docker build -t web:latest .
+      - docker tag web:latest 675467602881.dkr.ecr.ap-south-1.amazonaws.com/web:latest
   post_build:
     commands:
       - echo Build completed on `date` 
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 675467602881.dkr.ecr.ap-south-1.amazonaws.com
+      - docker push 675467602881.dkr.ecr.ap-south-1.amazonaws.com/web:latest
