@@ -34,15 +34,15 @@ Resources:
           FromPort: 8080
           ToPort: 8080
           CidrIp: 0.0.0.0/0
-  NexusContainerSecurityGroup:
+  webContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: NexusContainerSecurityGroup
+      GroupName: webContainerSecurityGroup
       GroupDescription: Security group for nexus container
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 81
-          ToPort: 81
+          FromPort: 80
+          ToPort: 80
           CidrIp: 0.0.0.0/0
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -81,3 +81,40 @@ Resources:
             - !Ref SubnetID
           SecurityGroups:
             - !GetAtt ContainerSecurityGroup.GroupId
+  TaskDefinition1:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: deployment-example-task1
+      Cpu: 256
+      Memory: 512
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !Ref ExecutionRole
+      ContainerDefinitions:
+        - Name: deployment-example-container1
+          Image: 675467602881.dkr.ecr.ap-south-1.amazonaws.com/web:latest
+          PortMappings:
+            - ContainerPort: 80
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroup
+              awslogs-stream-prefix: ecs
+      RequiresCompatibilities:
+        - EC2
+        - FARGATE
+  Service1:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: deployment-exmaple-service1
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinition1
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref SubnetID
+          SecurityGroups:
+            - !GetAtt webContainerSecurityGroup.GroupId
